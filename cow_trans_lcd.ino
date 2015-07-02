@@ -1,6 +1,8 @@
 #include <SPI.h>
 #include <avr/pgmspace.h>
 
+// temp correction in degrees celsius
+//const double correction = -2.109;
 /*
 
 
@@ -59,30 +61,64 @@ Chip is a 64bit shift register
 Adafruit_PCD8544 display = Adafruit_PCD8544(7, 6, 5, 4, 3);//4 and 3 are reversed on the cheap eBay models
 
 char ROMS[][8] = {
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  {0xFF, 0xFF, 0x04, 0x08,  0x00, 0x05, 0x03, 0x00},
+  {0xFF, 0xFF, 0x54, 0x58,  0x50, 0x55, 0x53, 0x00},
+  {0xFF, 0xFF, 0xA4, 0xA8,  0xA0, 0xA5, 0xA3, 0x00},
+  {0xFF, 0xFF, 0xF4, 0xF8,  0xF0, 0xF5, 0xF3, 0x00},
+  {0xFF, 0xFF, 0x04, 0x18,  0x20, 0x35, 0x43, 0x00},
+  {0xFF, 0xFF, 0x44, 0x38,  0x20, 0x15, 0x03, 0x00},
+
+  {0xFF, 0xFF, 0x00, 0x04,  0x08, 0x00, 0x05, 0x03},
+  {0xFF, 0xFF, 0x50, 0x54,  0x58, 0x50, 0x55, 0x53},
+  {0xFF, 0xFF, 0xA0, 0xA4,  0xA8, 0xA0, 0xA5, 0xA3},
+  {0xFF, 0xFF, 0xF0, 0xF4,  0xF8, 0xF0, 0xF5, 0xF3},
+  {0xFF, 0xFF, 0x00, 0x14,  0x28, 0x30, 0x45, 0x53},
+  {0xFF, 0xFF, 0x50, 0x44,  0x38, 0x20, 0x15, 0x03},
+
+  
+  {0x00, 0x00, 0x04, 0x08,  0x00, 0x05, 0x03, 0x00},
+  {0x00, 0x00, 0x54, 0x58,  0x50, 0x55, 0x53, 0x00},
+  {0x00, 0x00, 0xA4, 0xA8,  0xA0, 0xA5, 0xA3, 0x00},
+  {0x00, 0x00, 0xF4, 0xF8,  0xF0, 0xF5, 0xF3, 0x00},
+  {0x00, 0x00, 0x04, 0x18,  0x20, 0x35, 0x43, 0x00},
+  {0x00, 0x00, 0x44, 0x38,  0x20, 0x15, 0x03, 0x00},
+
+  {0x00, 0x00, 0x00, 0x04,  0x08, 0x00, 0x05, 0x03},
+  {0x00, 0x00, 0x50, 0x54,  0x58, 0x50, 0x55, 0x53},
+  {0x00, 0x00, 0xA0, 0xA4,  0xA8, 0xA0, 0xA5, 0xA3},
+  {0x00, 0x00, 0xF0, 0xF4,  0xF8, 0xF0, 0xF5, 0xF3},
+  {0x00, 0x00, 0x00, 0x14,  0x28, 0x30, 0x45, 0x53},
+  {0x00, 0x00, 0x50, 0x44,  0x38, 0x20, 0x15, 0x03},
+
+  
+  {0xAA, 0xAA, 0x04, 0x08,  0x00, 0x05, 0x03, 0x00},
+  {0xAA, 0xAA, 0x54, 0x58,  0x50, 0x55, 0x53, 0x00},
+  {0xAA, 0xAA, 0xA4, 0xA8,  0xA0, 0xA5, 0xA3, 0x00},
+  {0xAA, 0xAA, 0xF4, 0xF8,  0xF0, 0xF5, 0xF3, 0x00},
+  {0xAA, 0xAA, 0x04, 0x18,  0x20, 0x35, 0x43, 0x00},
+  {0xAA, 0xAA, 0x44, 0x38,  0x20, 0x15, 0x03, 0x00},
+
+  {0xAA, 0xAA, 0x00, 0x04,  0x08, 0x00, 0x05, 0x03},
+  {0xAA, 0xAA, 0x50, 0x54,  0x58, 0x50, 0x55, 0x53},
+  {0xAA, 0xAA, 0xA0, 0xA4,  0xA8, 0xA0, 0xA5, 0xA3},
+  {0xAA, 0xAA, 0xF0, 0xF4,  0xF8, 0xF0, 0xF5, 0xF3},
+  {0xAA, 0xAA, 0x00, 0x14,  0x28, 0x30, 0x45, 0x53},
+  {0xAA, 0xAA, 0x50, 0x44,  0x38, 0x20, 0x15, 0x03},
+
+  
+  {0x55, 0x55, 0x04, 0x08,  0x00, 0x05, 0x03, 0x00},
+  {0x55, 0x55, 0x54, 0x58,  0x50, 0x55, 0x53, 0x00},
+  {0x55, 0x55, 0xA4, 0xA8,  0xA0, 0xA5, 0xA3, 0x00},
+  {0x55, 0x55, 0xF4, 0xF8,  0xF0, 0xF5, 0xF3, 0x00},
+  {0x55, 0x55, 0x04, 0x18,  0x20, 0x35, 0x43, 0x00},
+  {0x55, 0x55, 0x44, 0x38,  0x20, 0x15, 0x03, 0x00},
+
+  {0x55, 0x55, 0x00, 0x04,  0x08, 0x00, 0x05, 0x03},
+  {0x55, 0x55, 0x50, 0x54,  0x58, 0x50, 0x55, 0x53},
+  {0x55, 0x55, 0xA0, 0xA4,  0xA8, 0xA0, 0xA5, 0xA3},
+  {0x55, 0x55, 0xF0, 0xF4,  0xF8, 0xF0, 0xF5, 0xF3},
+  {0x55, 0x55, 0x00, 0x14,  0x28, 0x30, 0x45, 0x53},
+  {0x55, 0x55, 0x50, 0x44,  0x38, 0x20, 0x15, 0x03},
 };
 
 enum ButtonCommands {
@@ -96,14 +132,14 @@ enum ButtonCommands {
 const double correction = -2.109;
 
 // PIN Definitions
-const int Pin_Btn1 = A0;
-const int Pin_Btn2 = A2;
-const int Pin_Btn3 = A3;
-const int Pin_Btn4 = A1;
-const int Pin_LED = 2;
-const int Pin_Temp = A7;
-const int Pin_Trans_Clk = 10;
-const int Pin_Trans_Data = 9;
+const int Pin_Btn1        = A0;
+const int Pin_Btn2        = A2;
+const int Pin_Btn3        = A3;
+const int Pin_Btn4        = A1;
+const int Pin_LED         = 2;
+const int Pin_Temp        = A7;
+const int Pin_Trans_Clk   = 10;
+const int Pin_Trans_Data  = 9;
 
 int PrevButton = None;
 unsigned long lastButtonPress = 0;
@@ -128,6 +164,20 @@ void setup() {
   //Serial.println("Running..."); 
   setupLcd();
 }
+
+double mapf(double x, double in_min, double in_max, double out_min, double out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+double getTemp()
+{
+  double in = 1.0 * analogRead(Pin_Temp);
+  double v = mapf(in, 0, 1024, 0, 5);
+  double temp_c = (((v * 1000) - 400) / 19.5) + correction;
+  return temp_c;
+}
+
 int GetButtonInput()
 {
   if(PrevButton == None)
@@ -176,21 +226,24 @@ void setupLcd()
 int MainMenu()
 {
   String entries[] = {
-    "Display memory",
-    "Auto program  ",
-    "Custom program",
+    //"Display memory",
+    "Program       ",
+    "Cur Temp      ",
+    //"Custom program",
     "About...      "
   };
   display.clearDisplay();
   
-  return Menu("Main Menu", entries, 4);
+  return Menu("Main Menu", entries, 3);
 }
 
 enum MainMenuCommands {
-  DisplayMemory = 0,
-  AutoProgram = 1,
-  CustomProgram = 2,
-  About = 3
+  Back = -1,
+//  DisplayMemory = 0,
+  AutoProgram = 0,
+//  CustomProgram = 2,
+  Temp = 1,
+  About = 2
 };
 
 int Menu(String title, String entries[], int entry_count)
@@ -259,6 +312,7 @@ int Menu(String title, String entries[], int entry_count)
     }
     else if(input == BtnBack)
     {
+
       return -1; // back
     }
   }
@@ -320,7 +374,7 @@ void waitFor(bool val)
   }
 }
 
-void program()
+void program(int offset)
 {
   display.clearDisplay();
   display.setCursor(0, 0);
@@ -335,42 +389,250 @@ void program()
   display.drawFastVLine(74, 40, 4, 255);
   display.display();
   //delay(750);
-  waitFor(LOW);
+  waitFor(HIGH);
   pinMode(Pin_Trans_Data, OUTPUT);
+  pinMode(Pin_Trans_Clk, OUTPUT);
+//  for(int i = 0; i < 64; i++)
+//  {
+    //waitFor(LOW);
+    //waitFor(HIGH);
+//    digitalWrite(Pin_Trans_Data, i % 2 == 0);
+//    if(i == 63) i = 0;
+//    int progress = 10 + i; // map(i, 0, 64, 0, 84);
+//    display.drawPixel(progress, 41, 255);
+//    display.drawPixel(progress, 42, 255);
+//    display.display();
+
+//    delay(10);
+//  }
+
+  pinMode(Pin_Trans_Clk, OUTPUT);
+  for(int i = 0; i < 8; i++)
+  {
+    shiftOut(Pin_Trans_Data, Pin_Trans_Clk, MSBFIRST, ROMS[offset][i]);
+  }
+
+  pinMode(Pin_Trans_Clk, INPUT);
+  pinMode(Pin_Trans_Data, INPUT);
+/* 
+  display.clearDisplay();
+  display.println(shiftIn(Pin_Trans_Data, Pin_Trans_Clk, MSBFIRST));
+  display.println(shiftIn(Pin_Trans_Data, Pin_Trans_Clk, MSBFIRST));
+  display.println(shiftIn(Pin_Trans_Data, Pin_Trans_Clk, MSBFIRST));
+  display.println(shiftIn(Pin_Trans_Data, Pin_Trans_Clk, MSBFIRST));
+  display.display();
+  delay(4000);*/
+  delay(50);
+}
+
+void PrintHex(char a, bool includeHexPrefix = false)
+{
+  if(includeHexPrefix == true)
+    display.print("0x");
+
+  int i = 0;
+
+  for(int i = 1; i >= 0; i--)
+  {
+    int val = (bitRead(a, i * 4 + 0) ? 1 : 0) +
+              (bitRead(a, i * 4 + 1) ? 1 : 0) * 2 +
+              (bitRead(a, i * 4 + 2) ? 1 : 0) * 4 +
+              (bitRead(a, i * 4 + 3) ? 1 : 0) * 8;
+  
+    char hexMap[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    display.print(hexMap[val]);
+  }
+}
+
+void PrintHex(bool arr[], int offset, bool includeHexPrefix = false)
+{
+  if(includeHexPrefix == true)
+    display.print("0x");
+
+  int val = (arr[offset + 3] ? 1 : 0) +
+            (arr[offset + 2] ? 1 : 0) * 2 +
+            (arr[offset + 1] ? 1 : 0) * 4 +
+            (arr[offset    ] ? 1 : 0) * 8;
+  
+  char hexMap[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+  display.print(hexMap[val]);
+}
+
+void DispRom(int i)
+{
+  for(int y = 0; y < 4; y++)
+  {
+    if(y > 0)
+      display.println("");
+    
+    int bitStart = y * 16;
+    
+    if(bitStart < 10)
+      display.print(" ");
+    
+    display.print(bitStart);
+    display.print(": ");
+
+    for(int x = 0; x < 2; x++)
+    {
+      if(x > 0)
+        display.print(" ");
+
+      PrintHex(ROMS[i][y * 2 + x    ], true);
+    }
+  }
+}
+
+void DispMem()
+{
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.setTextColor(255, 0);
+  printCentered(0, "Memory:");
+  display.println("");
+  display.display();
+
+  bool mem[64] = {0};
+
+  waitFor(LOW);
   for(int i = 0; i < 64; i++)
   {
     waitFor(HIGH);
     waitFor(LOW);
-    digitalWrite(Pin_Trans_Data, LOW);
-    
-    int progress = 10 + i; // map(i, 0, 64, 0, 84);
-    display.drawPixel(progress, 41, 255);
-    display.drawPixel(progress, 42, 255);
-    display.display();
+    bool bit = digitalRead(Pin_Trans_Data);
+    mem[i] = bit;
   }
-  pinMode(Pin_Trans_Data, INPUT);
-  
-  delay(50);
+/*  pinMode(Pin_Trans_Clk, OUTPUT);
+  for(int i = 0; i < 8; i++)
+  {
+    byte b = shiftIn(Pin_Trans_Data, Pin_Trans_Clk, MSBFIRST);
+    for(int x = 0; x < 8; x++)
+      mem[i * 8 + x] = bitRead(b, x);
+  }
+  pinMode(Pin_Trans_Clk, INPUT);
+*/
+  for(int y = 0; y < 4; y++)
+  {
+    if(y > 0)
+      display.println("");
+    
+    int bitStart = y * 16;
+    
+    if(bitStart < 10)
+      display.print(" ");
+    
+    display.print(bitStart);
+    display.print(": ");
+
+    for(int x = 0; x < 4; x += 2)
+    {
+      if(x > 0)
+        display.print(" ");
+      PrintHex(mem, y * 16 + x, true);
+      PrintHex(mem, y * 16 + x + 1, false);
+    }
+  }
+  display.display();
+
+  // what for user input
+  while(GetButtonInput() == None);
+}
+
+void ProgramLoop()
+{
+  int max = 48; // number of potential ROMs to program
+  int cur = 0;
+
+  int selection;
+
+  do {
+
+    program(cur);
+
+    display.clearDisplay();
+    printCentered(0, "Cur Mem:");
+    display.setCursor(0, 40);
+    display.print("Combo ");
+    display.print(cur + 1);
+    display.print(" / ");
+    display.print(max);
+    
+    display.setCursor(0, 8);
+    DispRom(cur);
+
+    display.display();
+    do {
+      selection = GetButtonInput();
+    } while(selection == None);
+
+    if(selection == BtnUp)
+    {
+      cur++;
+    }
+    else if(selection == BtnDown)
+    {
+      cur--;
+    }
+    else if(selection == BtnNext)
+    {
+      cur++;
+    }
+
+    if(cur >= max)
+      cur = 0;
+    if(cur < 0)
+      cur = max - 1;
+
+  } while(selection != BtnBack);
 }
 
 void loop() {
   MainMenuCommands entry = (MainMenuCommands)MainMenu();
 
-  if(entry == DisplayMemory)
+  if(entry == Back)
   {
-    //Serial.println("You selected display memory");
+    // cancel
+    display.clearDisplay();
   }
-  else if(entry == AutoProgram)
+//  if(entry == DisplayMemory)
+//  {
+    //Serial.println("You selected display memory");
+//    DispMem();
+//  }
+  if(entry == AutoProgram)
   {
-    program();
+    //program();
+    ProgramLoop();
     //Serial.println("You selected auto program");
   }
-  else if(entry == CustomProgram)
+  else if(entry == Temp)
   {
     //Serial.println("You selected custom program");
+    do{
+      double temp = getTemp();
+      display.clearDisplay();
+      display.println("Cur Temp:");
+      display.print(temp);
+      display.println(" deg C");
+
+      display.print(temp * (9.0 / 5.0) + 32);
+      display.println(" deg F");
+      display.display();
+      //delay(100);
+
+    } while(GetButtonInput() == None);
   }
   else if(entry == About)
   {
+    display.clearDisplay();
+    display.print("Kevin Schaefer");
+    display.print("Firmware: 1.0 ");
+    display.print("Build: 7/1/'15");
+    display.println("");
+    display.print("kevin.l.schaef");
+    display.print("er@gmail.com  ");
+    display.display();
+    while(GetButtonInput() == None);
     //Serial.println("You selected the about option");
   }
 }
